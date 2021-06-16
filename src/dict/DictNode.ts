@@ -26,29 +26,57 @@
  * Copyright in any portions created by third parties is as indicated
  * elsewhere herein. All Rights Reserved.
  */
-define(["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.GluFace = void 0;
-    /**
-     * Each face has a pointer to the next and previous faces in the
-     * circular list, and a pointer to a half-edge with this face as
-     * the left face (null if this is the dummy header). There is also
-     * a field "data" for client data.
-     */
-    class GluFace {
-        constructor(opt_nextFace, opt_prevFace) {
-            /**
-             * A half edge with this left face.
-             */
-            this.anEdge = null;
-            /**
-             * This face is in the polygon interior.
-             */
-            this.inside = false;
-            this.next = opt_nextFace || this;
-            this.prev = opt_prevFace || this;
-        }
-    }
-    exports.GluFace = GluFace;
-});
+
+import { ActiveRegion } from "../sweep/ActiveRegion";
+
+/**
+ * A doubly-linked-list node with a libtess.ActiveRegion payload.
+ * The key for this node and the next and previous nodes in the parent Dict list
+ * can be provided to insert it into an existing list (or all can be omitted if
+ * this is to be the founding node of the list).
+ */
+export class DictNode {
+  constructor(opt_key?: ActiveRegion, opt_nextNode?: DictNode, opt_prevNode?: DictNode) {
+    this.key = opt_key || null;
+    this.next = opt_nextNode || this;
+    this.prev = opt_prevNode || this;
+  }
+
+  /**
+   * The ActiveRegion key for this node, or null if the head of the list.
+   */
+  key: ActiveRegion
+
+  /**
+   * Link to next DictNode in parent list or to self if this is the first node.
+   */
+  next: DictNode
+
+  /**
+   * Link to previous DictNode in parent list or to self if this is the first node.
+   */
+  prev: DictNode;
+
+  
+  /**
+   * Get the key from this node.
+   */
+  getKey(): ActiveRegion {
+    return this.key;
+  };
+
+  /**
+   * Get the successor node to this one.
+   */
+  getSuccessor(): DictNode {
+    return this.next;
+  };
+
+  /**
+   * Get the predecessor node to this one.
+   */
+  getPredecessor(): DictNode {
+    return this.prev;
+  };
+
+};

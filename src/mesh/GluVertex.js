@@ -26,67 +26,48 @@
  * Copyright in any portions created by third parties is as indicated
  * elsewhere herein. All Rights Reserved.
  */
-/* global libtess */
-
-/**
- * Each vertex has a pointer to next and previous vertices in the
- * circular list, and a pointer to a half-edge with this vertex as
- * the origin (null if this is the dummy header). There is also a
- * field "data" for client data.
- * @param {libtess.GluVertex=} opt_nextVertex Optional reference to next vertex in the vertex list.
- * @param {libtess.GluVertex=} opt_prevVertex Optional reference to previous vertex in the vertex list.
- * @constructor
- * @struct
- */
-libtess.GluVertex = function(opt_nextVertex, opt_prevVertex) {
-  /**
-   * Next vertex (never null).
-   * @type {!libtess.GluVertex}
-   */
-  this.next = opt_nextVertex || this;
-
-  /**
-   * Previous vertex (never null).
-   * @type {!libtess.GluVertex}
-   */
-  this.prev = opt_prevVertex || this;
-
-  /**
-   * A half-edge with this origin.
-   * @type {libtess.GluHalfEdge}
-   */
-  this.anEdge = null;
-
-  /**
-   * The client's data.
-   * @type {Object}
-   */
-  this.data = null;
-
-  /**
-   * The vertex location in 3D.
-   * @type {!Array.<number>}
-   */
-  this.coords = [0, 0, 0];
-  // TODO(bckenny): we may want to rethink coords, either eliminate (using s
-  // and t and user data) or index into contiguous storage?
-
-  /**
-   * Component of projection onto the sweep plane.
-   * @type {number}
-   */
-  this.s = 0;
-
-  /**
-   * Component of projection onto the sweep plane.
-   * @type {number}
-   */
-  this.t = 0;
-
-  /**
-   * Handle to allow deletion from priority queue, or 0 if not yet inserted into
-   * queue.
-   * @type {libtess.PQHandle}
-   */
-  this.pqHandle = 0;
-};
+define(["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.GluVertex = void 0;
+    /**
+     * Each vertex has a pointer to next and previous vertices in the
+     * circular list, and a pointer to a half-edge with this vertex as
+     * the origin (null if this is the dummy header). There is also a
+     * field "data" for client data.
+     */
+    class GluVertex {
+        constructor(opt_nextVertex, opt_prevVertex) {
+            /**
+             * A half-edge with this origin.
+             */
+            this.anEdge = null;
+            /**
+             * The client's data.
+             */
+            this.data = null;
+            /**
+             * The vertex location in 3D.
+             */
+            this.coords = [0, 0, 0];
+            // TODO(bckenny): we may want to rethink coords, either eliminate (using s
+            // and t and user data) or index into contiguous storage?
+            /**
+             * Component of projection onto the sweep plane.
+             */
+            this.s = 0;
+            /**
+             * Component of projection onto the sweep plane.
+             */
+            this.t = 0;
+            /**
+             * Handle to allow deletion from priority queue, or 0 if not yet inserted into
+             * queue.
+             */
+            this.pqHandle = 0;
+            this.next = opt_nextVertex || this;
+            this.prev = opt_prevVertex || this;
+        }
+    }
+    exports.GluVertex = GluVertex;
+});

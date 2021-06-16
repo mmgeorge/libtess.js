@@ -26,172 +26,118 @@
  * Copyright in any portions created by third parties is as indicated
  * elsewhere herein. All Rights Reserved.
  */
-/* global libtess */
-
-/**
- * The fundamental data structure is the "half-edge". Two half-edges
- * go together to make an edge, but they point in opposite directions.
- * Each half-edge has a pointer to its mate (the "symmetric" half-edge sym),
- * its origin vertex (org), the face on its left side (lFace), and the
- * adjacent half-edges in the CCW direction around the origin vertex
- * (oNext) and around the left face (lNext). There is also a "next"
- * pointer for the global edge list (see below).
- *
- * The notation used for mesh navigation:
- *  sym   = the mate of a half-edge (same edge, but opposite direction)
- *  oNext = edge CCW around origin vertex (keep same origin)
- *  dNext = edge CCW around destination vertex (keep same dest)
- *  lNext = edge CCW around left face (dest becomes new origin)
- *  rNext = edge CCW around right face (origin becomes new dest)
- *
- * "prev" means to substitute CW for CCW in the definitions above.
- *
- * The circular edge list is special; since half-edges always occur
- * in pairs (e and e.sym), each half-edge stores a pointer in only
- * one direction. Starting at eHead and following the e.next pointers
- * will visit each *edge* once (ie. e or e.sym, but not both).
- * e.sym stores a pointer in the opposite direction, thus it is
- * always true that e.sym.next.sym.next === e.
- *
- * @param {libtess.GluHalfEdge=} opt_nextEdge
- * @constructor
- * @struct
- */
-libtess.GluHalfEdge = function(opt_nextEdge) {
-  // TODO(bckenny): are these the right defaults? (from gl_meshNewMesh requirements)
-
-  /**
-   * doubly-linked list (prev==sym->next)
-   * @type {!libtess.GluHalfEdge}
-   */
-  this.next = opt_nextEdge || this;
-
-  // TODO(bckenny): how can this be required if created in pairs? move to factory creation only?
-  /**
-   * same edge, opposite direction
-   * @type {libtess.GluHalfEdge}
-   */
-  this.sym = null;
-
-  /**
-   * next edge CCW around origin
-   * @type {libtess.GluHalfEdge}
-   */
-  this.oNext = null;
-
-  /**
-   * next edge CCW around left face
-   * @type {libtess.GluHalfEdge}
-   */
-  this.lNext = null;
-
-  /**
-   * origin vertex (oVertex too long)
-   * @type {libtess.GluVertex}
-   */
-  this.org = null;
-
-  /**
-   * left face
-   * @type {libtess.GluFace}
-   */
-  this.lFace = null;
-
-  // Internal data (keep hidden)
-  // NOTE(bckenny): can't be private, though...
-
-  /**
-   * a region with this upper edge (see sweep.js)
-   * @type {libtess.ActiveRegion}
-   */
-  this.activeRegion = null;
-
-  /**
-   * change in winding number when crossing from the right face to the left face
-   * @type {number}
-   */
-  this.winding = 0;
-};
-
-// NOTE(bckenny): the following came from macros in mesh
-// TODO(bckenny): using methods as aliases for sym connections for now.
-// not sure about this approach. getters? renames?
-
-
-/**
- * [rFace description]
- * @return {libtess.GluFace} [description].
- */
-libtess.GluHalfEdge.prototype.rFace = function() {
-  return this.sym.lFace;
-};
-
-
-/**
- * [dst description]
- * @return {libtess.GluVertex} [description].
- */
-libtess.GluHalfEdge.prototype.dst = function() {
-  return this.sym.org;
-};
-
-
-/**
- * [oPrev description]
- * @return {libtess.GluHalfEdge} [description].
- */
-libtess.GluHalfEdge.prototype.oPrev = function() {
-  return this.sym.lNext;
-};
-
-
-/**
- * [lPrev description]
- * @return {libtess.GluHalfEdge} [description].
- */
-libtess.GluHalfEdge.prototype.lPrev = function() {
-  return this.oNext.sym;
-};
-
-// NOTE(bckenny): libtess.GluHalfEdge.dPrev is called nowhere in libtess and
-// isn't part of the current public API. It could be useful for mesh traversal
-// and manipulation if made public, however.
-/* istanbul ignore next */
-/**
- * The edge clockwise around destination vertex (keep same dest).
- * @return {libtess.GluHalfEdge}
- */
-libtess.GluHalfEdge.prototype.dPrev = function() {
-  return this.lNext.sym;
-};
-
-
-/**
- * [rPrev description]
- * @return {libtess.GluHalfEdge} [description].
- */
-libtess.GluHalfEdge.prototype.rPrev = function() {
-  return this.sym.oNext;
-};
-
-
-/**
- * [dNext description]
- * @return {libtess.GluHalfEdge} [description].
- */
-libtess.GluHalfEdge.prototype.dNext = function() {
-  return this.rPrev().sym;
-};
-
-
-// NOTE(bckenny): libtess.GluHalfEdge.rNext is called nowhere in libtess and
-// isn't part of the current public API. It could be useful for mesh traversal
-// and manipulation if made public, however.
-/* istanbul ignore next */
-/**
- * The edge CCW around the right face (origin of this becomes new dest).
- * @return {libtess.GluHalfEdge}
- */
-libtess.GluHalfEdge.prototype.rNext = function() {
-  return this.oPrev().sym;
-};
+define(["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.GluHalfEdge = void 0;
+    /**
+     * The fundamental data structure is the "half-edge". Two half-edges
+     * go together to make an edge, but they point in opposite directions.
+     * Each half-edge has a pointer to its mate (the "symmetric" half-edge sym),
+     * its origin vertex (org), the face on its left side (lFace), and the
+     * adjacent half-edges in the CCW direction around the origin vertex
+     * (oNext) and around the left face (lNext). There is also a "next"
+     * pointer for the global edge list (see below).
+     *
+     * The notation used for mesh navigation:
+     *  sym   = the mate of a half-edge (same edge, but opposite direction)
+     *  oNext = edge CCW around origin vertex (keep same origin)
+     *  dNext = edge CCW around destination vertex (keep same dest)
+     *  lNext = edge CCW around left face (dest becomes new origin)
+     *  rNext = edge CCW around right face (origin becomes new dest)
+     *
+     * "prev" means to substitute CW for CCW in the definitions above.
+     *
+     * The circular edge list is special; since half-edges always occur
+     * in pairs (e and e.sym), each half-edge stores a pointer in only
+     * one direction. Starting at eHead and following the e.next pointers
+     * will visit each *edge* once (ie. e or e.sym, but not both).
+     * e.sym stores a pointer in the opposite direction, thus it is
+     * always true that e.sym.next.sym.next === e.
+     */
+    class GluHalfEdge {
+        constructor(opt_nextEdge) {
+            // TODO(bckenny): how can this be required if created in pairs? move to factory creation only?
+            /**
+             * same edge, opposite direction
+             */
+            this.sym = null;
+            /**
+             * next edge CCW around origin
+             */
+            this.oNext = null;
+            /**
+             * next edge CCW around left face
+             */
+            this.lNext = null;
+            /**
+             * origin vertex (oVertex too long)
+             */
+            this.org = null;
+            /**
+             * left face
+             */
+            this.lFace = null;
+            // Internal data (keep hidden)
+            // NOTE(bckenny): can't be private, though...
+            /**
+             * a region with this upper edge (see sweep.js)
+             */
+            this.activeRegion = null;
+            /**
+             * change in winding number when crossing from the right face to the left face
+             */
+            this.winding = 0;
+            this.next = opt_nextEdge || this;
+        }
+        // NOTE(bckenny): the following came from macros in mesh
+        // TODO(bckenny): using methods as aliases for sym connections for now.
+        // not sure about this approach. getters? renames?
+        rFace() {
+            return this.sym.lFace;
+        }
+        ;
+        dst() {
+            return this.sym.org;
+        }
+        ;
+        oPrev() {
+            return this.sym.lNext;
+        }
+        ;
+        lPrev() {
+            return this.oNext.sym;
+        }
+        ;
+        // NOTE(bckenny): GluHalfEdge.dPrev is called nowhere in libtess and
+        // isn't part of the current public API. It could be useful for mesh traversal
+        // and manipulation if made public, however.
+        /**
+         * The edge clockwise around destination vertex (keep same dest).
+         */
+        dPrev() {
+            return this.lNext.sym;
+        }
+        ;
+        rPrev() {
+            return this.sym.oNext;
+        }
+        ;
+        dNext() {
+            return this.rPrev().sym;
+        }
+        ;
+        // NOTE(bckenny): GluHalfEdge.rNext is called nowhere in libtess and
+        // isn't part of the current public API. It could be useful for mesh traversal
+        // and manipulation if made public, however.
+        /**
+         * The edge CCW around the right face (origin of this becomes new dest).
+         */
+        rNext() {
+            return this.oPrev().sym;
+        }
+        ;
+    }
+    exports.GluHalfEdge = GluHalfEdge;
+    ;
+});

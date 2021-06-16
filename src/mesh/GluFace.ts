@@ -26,29 +26,41 @@
  * Copyright in any portions created by third parties is as indicated
  * elsewhere herein. All Rights Reserved.
  */
-define(["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.GluFace = void 0;
-    /**
-     * Each face has a pointer to the next and previous faces in the
-     * circular list, and a pointer to a half-edge with this face as
-     * the left face (null if this is the dummy header). There is also
-     * a field "data" for client data.
-     */
-    class GluFace {
-        constructor(opt_nextFace, opt_prevFace) {
-            /**
-             * A half edge with this left face.
-             */
-            this.anEdge = null;
-            /**
-             * This face is in the polygon interior.
-             */
-            this.inside = false;
-            this.next = opt_nextFace || this;
-            this.prev = opt_prevFace || this;
-        }
-    }
-    exports.GluFace = GluFace;
-});
+
+import { GluHalfEdge } from "./GluHalfEdge";
+
+/**
+ * Each face has a pointer to the next and previous faces in the
+ * circular list, and a pointer to a half-edge with this face as
+ * the left face (null if this is the dummy header). There is also
+ * a field "data" for client data.
+ */
+export class GluFace {
+  constructor(opt_nextFace?: GluFace, opt_prevFace?: GluFace) {
+    this.next = opt_nextFace || this;
+    this.prev = opt_prevFace || this;
+  }
+
+  // TODO(bckenny): reverse order of params?
+
+  /**
+   * next face (never null)
+   * @type {!GluFace}
+   */
+  next: GluFace; 
+
+  /**
+   * previous face (never NULL)
+   */
+  prev: GluFace
+
+  /**
+   * A half edge with this left face.
+   */
+  anEdge: GluHalfEdge = null;
+
+  /**
+   * This face is in the polygon interior.
+   */
+  inside = false;
+}

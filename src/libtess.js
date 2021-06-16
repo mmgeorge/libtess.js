@@ -31,157 +31,147 @@
  * @author ericv@cs.stanford.edu (Eric Veach)
  * @author bckenny@google.com (Brendan Kenny)
  */
-
-/**
- * Base namespace.
- * @const
- */
-var libtess = {};
-
-/**
- * Whether to run asserts and extra debug checks.
- * @define {boolean}
- */
-libtess.DEBUG = true;
-
-/**
- * Checks if the condition evaluates to true if libtess.DEBUG is true.
- * @param {*} condition The condition to check.
- * @param {string=} opt_message Error message in case of failure.
- * @throws {Error} Assertion failed, the condition evaluates to false.
- */
-libtess.assert = function(condition, opt_message) {
-  if (libtess.DEBUG && !condition) {
-    throw new Error('Assertion failed' +
-        (opt_message ? ': ' + opt_message : ''));
-  }
-};
-
-/**
- * The maximum vertex coordinate size, 1e150. Anything larger will trigger a
- * GLU_TESS_COORD_TOO_LARGE error callback and the vertex will be clamped to
- * this value for all tessellation calculations.
- * @const {number}
- */
-libtess.GLU_TESS_MAX_COORD = 1e150;
-// NOTE(bckenny): value from glu.pl generator
-
-/**
- * Normally the polygon is projected to a plane perpendicular to one of the
- * three coordinate axes before tessellating in 2d. This helps numerical
- * accuracy by forgoing a transformation step by simply dropping one coordinate
- * dimension.
- *
- * However, this can affect the placement of intersection points for non-axis-
- * aligned polygons. Setting TRUE_PROJECT to true will instead project onto a
- * plane actually perpendicular to the polygon's normal.
- *
- * NOTE(bckenny): I can find no instances on the internet in which this mode has
- * been used, but it's difficult to search for. This was a compile-time setting
- * in the original, so setting this as constant. If this is exposed in the
- * public API, remove the ignore coverage directives on
- * libtess.normal.projectPolygon and libtess.normal.normalize_.
- * @const {boolean}
- */
-libtess.TRUE_PROJECT = false;
-
-/**
- * The default tolerance for merging features, 0, meaning vertices are only
- * merged if they are exactly coincident
- * If a higher tolerance is needed, significant rewriting will need to occur.
- * See libtess.sweep.TOLERANCE_NONZERO_ as a starting place.
- * @const {number}
- */
-libtess.GLU_TESS_DEFAULT_TOLERANCE = 0;
-
-/**
- * The input contours parition the plane into regions. A winding
- * rule determines which of these regions are inside the polygon.
- *
- * For a single contour C, the winding number of a point x is simply
- * the signed number of revolutions we make around x as we travel
- * once around C (where CCW is positive). When there are several
- * contours, the individual winding numbers are summed. This
- * procedure associates a signed integer value with each point x in
- * the plane. Note that the winding number is the same for all
- * points in a single region.
- *
- * The winding rule classifies a region as "inside" if its winding
- * number belongs to the chosen category (odd, nonzero, positive,
- * negative, or absolute value of at least two). The current GLU
- * tesselator implements the "odd" rule. The "nonzero" rule is another
- * common way to define the interior. The other three rules are
- * useful for polygon CSG operations.
- * @enum {number}
- */
-libtess.windingRule = {
-  // NOTE(bckenny): values from enumglu.spec
-  GLU_TESS_WINDING_ODD: 100130,
-  GLU_TESS_WINDING_NONZERO: 100131,
-  GLU_TESS_WINDING_POSITIVE: 100132,
-  GLU_TESS_WINDING_NEGATIVE: 100133,
-  GLU_TESS_WINDING_ABS_GEQ_TWO: 100134
-};
-
-/**
- * The type of primitive return from a "begin" callback. GL_LINE_LOOP is only
- * returned when GLU_TESS_BOUNDARY_ONLY is true. GL_TRIANGLE_STRIP and
- * GL_TRIANGLE_FAN are no longer returned since 1.1.0 (see release notes).
- * @enum {number}
- */
-libtess.primitiveType = {
-  GL_LINE_LOOP: 2,
-  GL_TRIANGLES: 4,
-  GL_TRIANGLE_STRIP: 5,
-  GL_TRIANGLE_FAN: 6
-};
-
-/**
- * The types of errors provided in the error callback.
- * @enum {number}
- */
-libtess.errorType = {
-  // TODO(bckenny) doc types
-  // NOTE(bckenny): values from enumglu.spec
-  GLU_TESS_MISSING_BEGIN_POLYGON: 100151,
-  GLU_TESS_MISSING_END_POLYGON: 100153,
-  GLU_TESS_MISSING_BEGIN_CONTOUR: 100152,
-  GLU_TESS_MISSING_END_CONTOUR: 100154,
-  GLU_TESS_COORD_TOO_LARGE: 100155,
-  GLU_TESS_NEED_COMBINE_CALLBACK: 100156
-};
-
-/**
- * Enum values necessary for providing settings and callbacks. See the readme
- * for details.
- * @enum {number}
- */
-libtess.gluEnum = {
-  // TODO(bckenny): rename so not always typing libtess.gluEnum.*?
-
-  // NOTE(bckenny): values from enumglu.spec
-  GLU_TESS_BEGIN: 100100,
-  GLU_TESS_VERTEX: 100101,
-  GLU_TESS_END: 100102,
-  GLU_TESS_ERROR: 100103,
-  GLU_TESS_EDGE_FLAG: 100104,
-  GLU_TESS_COMBINE: 100105,
-  GLU_TESS_BEGIN_DATA: 100106,
-  GLU_TESS_VERTEX_DATA: 100107,
-  GLU_TESS_END_DATA: 100108,
-  GLU_TESS_ERROR_DATA: 100109,
-  GLU_TESS_EDGE_FLAG_DATA: 100110,
-  GLU_TESS_COMBINE_DATA: 100111,
-
-  GLU_TESS_MESH: 100112,  //  NOTE(bckenny): from tess.c
-  GLU_TESS_TOLERANCE: 100142,
-  GLU_TESS_WINDING_RULE: 100140,
-  GLU_TESS_BOUNDARY_ONLY: 100141,
-
-  // TODO(bckenny): move this to libtess.errorType?
-  GLU_INVALID_ENUM: 100900,
-  GLU_INVALID_VALUE: 100901
-};
-
-/** @typedef {number} */
-libtess.PQHandle;
+define(["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.GluEnum = exports.ErrorType = exports.PrimitiveType = exports.WindingRule = exports.GLU_TESS_DEFAULT_TOLERANCE = exports.TRUE_PROJECT = exports.GLU_TESS_MAX_COORD = exports.assert = exports.DEBUG = void 0;
+    /**
+     * Whether to run asserts and extra debug checks.
+     * @define {boolean}
+     */
+    exports.DEBUG = true;
+    /**
+     * Checks if the condition evaluates to true if libtess.DEBUG is true.
+     * @param {*} condition The condition to check.
+     * @param {string=} opt_message Error message in case of failure.
+     * @throws {Error} Assertion failed, the condition evaluates to false.
+     */
+    function assert(condition, opt_message) {
+        if (exports.DEBUG && !condition) {
+            throw new Error('Assertion failed' +
+                (opt_message ? ': ' + opt_message : ''));
+        }
+    }
+    exports.assert = assert;
+    ;
+    /**
+     * The maximum vertex coordinate size, 1e150. Anything larger will trigger a
+     * GLU_TESS_COORD_TOO_LARGE error callback and the vertex will be clamped to
+     * this value for all tessellation calculations.
+     * @const {number}
+     */
+    exports.GLU_TESS_MAX_COORD = 1e150;
+    // NOTE(bckenny): value from glu.pl generator
+    /**
+     * Normally the polygon is projected to a plane perpendicular to one of the
+     * three coordinate axes before tessellating in 2d. This helps numerical
+     * accuracy by forgoing a transformation step by simply dropping one coordinate
+     * dimension.
+     *
+     * However, this can affect the placement of intersection points for non-axis-
+     * aligned polygons. Setting TRUE_PROJECT to true will instead project onto a
+     * plane actually perpendicular to the polygon's normal.
+     *
+     * NOTE(bckenny): I can find no instances on the internet in which this mode has
+     * been used, but it's difficult to search for. This was a compile-time setting
+     * in the original, so setting this as constant. If this is exposed in the
+     * public API, remove the ignore coverage directives on
+     * normal.projectPolygon and normal.normalize_.
+     * @const {boolean}
+     */
+    exports.TRUE_PROJECT = false;
+    /**
+     * The default tolerance for merging features, 0, meaning vertices are only
+     * merged if they are exactly coincident
+     * If a higher tolerance is needed, significant rewriting will need to occur.
+     * See sweep.TOLERANCE_NONZERO_ as a starting place.
+     * @const {number}
+     */
+    exports.GLU_TESS_DEFAULT_TOLERANCE = 0;
+    /**
+     * The input contours parition the plane into regions. A winding
+     * rule determines which of these regions are inside the polygon.
+     *
+     * For a single contour C, the winding number of a point x is simply
+     * the signed number of revolutions we make around x as we travel
+     * once around C (where CCW is positive). When there are several
+     * contours, the individual winding numbers are summed. This
+     * procedure associates a signed integer value with each point x in
+     * the plane. Note that the winding number is the same for all
+     * points in a single region.
+     *
+     * The winding rule classifies a region as "inside" if its winding
+     * number belongs to the chosen category (odd, nonzero, positive,
+     * negative, or absolute value of at least two). The current GLU
+     * tesselator implements the "odd" rule. The "nonzero" rule is another
+     * common way to define the interior. The other three rules are
+     * useful for polygon CSG operations.
+     * @enum {number}
+     */
+    var WindingRule;
+    (function (WindingRule) {
+        // NOTE(bckenny): values from enumglu.spec
+        WindingRule[WindingRule["GLU_TESS_WINDING_ODD"] = 100130] = "GLU_TESS_WINDING_ODD";
+        WindingRule[WindingRule["GLU_TESS_WINDING_NONZERO"] = 100131] = "GLU_TESS_WINDING_NONZERO";
+        WindingRule[WindingRule["GLU_TESS_WINDING_POSITIVE"] = 100132] = "GLU_TESS_WINDING_POSITIVE";
+        WindingRule[WindingRule["GLU_TESS_WINDING_NEGATIVE"] = 100133] = "GLU_TESS_WINDING_NEGATIVE";
+        WindingRule[WindingRule["GLU_TESS_WINDING_ABS_GEQ_TWO"] = 100134] = "GLU_TESS_WINDING_ABS_GEQ_TWO";
+    })(WindingRule = exports.WindingRule || (exports.WindingRule = {}));
+    ;
+    /**
+     * The type of primitive return from a "begin" callback. GL_LINE_LOOP is only
+     * returned when GLU_TESS_BOUNDARY_ONLY is true. GL_TRIANGLE_STRIP and
+     * GL_TRIANGLE_FAN are no longer returned since 1.1.0 (see release notes).
+     */
+    var PrimitiveType;
+    (function (PrimitiveType) {
+        PrimitiveType[PrimitiveType["GL_LINE_LOOP"] = 2] = "GL_LINE_LOOP";
+        PrimitiveType[PrimitiveType["GL_TRIANGLES"] = 4] = "GL_TRIANGLES";
+        PrimitiveType[PrimitiveType["GL_TRIANGLE_STRIP"] = 5] = "GL_TRIANGLE_STRIP";
+        PrimitiveType[PrimitiveType["GL_TRIANGLE_FAN"] = 6] = "GL_TRIANGLE_FAN";
+    })(PrimitiveType = exports.PrimitiveType || (exports.PrimitiveType = {}));
+    ;
+    /**
+     * The types of errors provided in the error callback.
+     */
+    var ErrorType;
+    (function (ErrorType) {
+        // TODO(bckenny) doc types
+        // NOTE(bckenny) = values from enumglu.spec
+        ErrorType[ErrorType["GLU_TESS_MISSING_BEGIN_POLYGON"] = 100151] = "GLU_TESS_MISSING_BEGIN_POLYGON";
+        ErrorType[ErrorType["GLU_TESS_MISSING_END_POLYGON"] = 100153] = "GLU_TESS_MISSING_END_POLYGON";
+        ErrorType[ErrorType["GLU_TESS_MISSING_BEGIN_CONTOUR"] = 100152] = "GLU_TESS_MISSING_BEGIN_CONTOUR";
+        ErrorType[ErrorType["GLU_TESS_MISSING_END_CONTOUR"] = 100154] = "GLU_TESS_MISSING_END_CONTOUR";
+        ErrorType[ErrorType["GLU_TESS_COORD_TOO_LARGE"] = 100155] = "GLU_TESS_COORD_TOO_LARGE";
+        ErrorType[ErrorType["GLU_TESS_NEED_COMBINE_CALLBACK"] = 100156] = "GLU_TESS_NEED_COMBINE_CALLBACK";
+    })(ErrorType = exports.ErrorType || (exports.ErrorType = {}));
+    ;
+    /**
+     * Enum values necessary for providing settings and callbacks. See the readme
+     * for details.
+     */
+    var GluEnum;
+    (function (GluEnum) {
+        // NOTE(bckenny): values from enumglu.spec
+        GluEnum[GluEnum["GLU_TESS_BEGIN"] = 100100] = "GLU_TESS_BEGIN";
+        GluEnum[GluEnum["GLU_TESS_VERTEX"] = 100101] = "GLU_TESS_VERTEX";
+        GluEnum[GluEnum["GLU_TESS_END"] = 100102] = "GLU_TESS_END";
+        GluEnum[GluEnum["GLU_TESS_ERROR"] = 100103] = "GLU_TESS_ERROR";
+        GluEnum[GluEnum["GLU_TESS_EDGE_FLAG"] = 100104] = "GLU_TESS_EDGE_FLAG";
+        GluEnum[GluEnum["GLU_TESS_COMBINE"] = 100105] = "GLU_TESS_COMBINE";
+        GluEnum[GluEnum["GLU_TESS_BEGIN_DATA"] = 100106] = "GLU_TESS_BEGIN_DATA";
+        GluEnum[GluEnum["GLU_TESS_VERTEX_DATA"] = 100107] = "GLU_TESS_VERTEX_DATA";
+        GluEnum[GluEnum["GLU_TESS_END_DATA"] = 100108] = "GLU_TESS_END_DATA";
+        GluEnum[GluEnum["GLU_TESS_ERROR_DATA"] = 100109] = "GLU_TESS_ERROR_DATA";
+        GluEnum[GluEnum["GLU_TESS_EDGE_FLAG_DATA"] = 100110] = "GLU_TESS_EDGE_FLAG_DATA";
+        GluEnum[GluEnum["GLU_TESS_COMBINE_DATA"] = 100111] = "GLU_TESS_COMBINE_DATA";
+        GluEnum[GluEnum["GLU_TESS_MESH"] = 100112] = "GLU_TESS_MESH";
+        GluEnum[GluEnum["GLU_TESS_TOLERANCE"] = 100142] = "GLU_TESS_TOLERANCE";
+        GluEnum[GluEnum["GLU_TESS_WINDING_RULE"] = 100140] = "GLU_TESS_WINDING_RULE";
+        GluEnum[GluEnum["GLU_TESS_BOUNDARY_ONLY"] = 100141] = "GLU_TESS_BOUNDARY_ONLY";
+        // TODO(bckenny) = move this to errorType?
+        GluEnum[GluEnum["GLU_INVALID_ENUM"] = 100900] = "GLU_INVALID_ENUM";
+        GluEnum[GluEnum["GLU_INVALID_VALUE"] = 100901] = "GLU_INVALID_VALUE";
+    })(GluEnum = exports.GluEnum || (exports.GluEnum = {}));
+    ;
+});

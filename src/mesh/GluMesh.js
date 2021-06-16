@@ -27,108 +27,95 @@
  * elsewhere herein. All Rights Reserved.
  */
 /* global libtess */
-
-/**
- * Creates a new mesh with no edges, no vertices,
- * and no loops (what we usually call a "face").
- *
- * @constructor
- * @struct
- */
-libtess.GluMesh = function() {
-  /**
-   * dummy header for vertex list
-   * @type {libtess.GluVertex}
-   */
-  this.vHead = new libtess.GluVertex();
-
-  /**
-   * dummy header for face list
-   * @type {libtess.GluFace}
-   */
-  this.fHead = new libtess.GluFace();
-
-  /**
-   * dummy header for edge list
-   * @type {libtess.GluHalfEdge}
-   */
-  this.eHead = new libtess.GluHalfEdge();
-
-  /**
-   * and its symmetric counterpart
-   * @type {libtess.GluHalfEdge}
-   */
-  this.eHeadSym = new libtess.GluHalfEdge();
-
-  // TODO(bckenny): better way to pair these?
-  this.eHead.sym = this.eHeadSym;
-  this.eHeadSym.sym = this.eHead;
-};
-
-
-// TODO(bckenny): #ifndef NDEBUG
-/**
- * Checks mesh for self-consistency.
- */
-libtess.GluMesh.prototype.checkMesh = function() {
-  if (!libtess.DEBUG) {
-    return;
-  }
-
-  var fHead = this.fHead;
-  var vHead = this.vHead;
-  var eHead = this.eHead;
-
-  var e;
-
-  // faces
-  var f;
-  var fPrev = fHead;
-  for (fPrev = fHead; (f = fPrev.next) !== fHead; fPrev = f) {
-    libtess.assert(f.prev === fPrev);
-    e = f.anEdge;
-    do {
-      libtess.assert(e.sym !== e);
-      libtess.assert(e.sym.sym === e);
-      libtess.assert(e.lNext.oNext.sym === e);
-      libtess.assert(e.oNext.sym.lNext === e);
-      libtess.assert(e.lFace === f);
-      e = e.lNext;
-    } while (e !== f.anEdge);
-  }
-  libtess.assert(f.prev === fPrev && f.anEdge === null);
-
-  // vertices
-  var v;
-  var vPrev = vHead;
-  for (vPrev = vHead; (v = vPrev.next) !== vHead; vPrev = v) {
-    libtess.assert(v.prev === vPrev);
-    e = v.anEdge;
-    do {
-      libtess.assert(e.sym !== e);
-      libtess.assert(e.sym.sym === e);
-      libtess.assert(e.lNext.oNext.sym === e);
-      libtess.assert(e.oNext.sym.lNext === e);
-      libtess.assert(e.org === v);
-      e = e.oNext;
-    } while (e !== v.anEdge);
-  }
-  libtess.assert(v.prev === vPrev && v.anEdge === null && v.data === null);
-
-  // edges
-  var ePrev = eHead;
-  for (ePrev = eHead; (e = ePrev.next) !== eHead; ePrev = e) {
-    libtess.assert(e.sym.next === ePrev.sym);
-    libtess.assert(e.sym !== e);
-    libtess.assert(e.sym.sym === e);
-    libtess.assert(e.org !== null);
-    libtess.assert(e.dst() !== null);
-    libtess.assert(e.lNext.oNext.sym === e);
-    libtess.assert(e.oNext.sym.lNext === e);
-  }
-  libtess.assert(e.sym.next === ePrev.sym &&
-      e.sym === this.eHeadSym &&
-      e.sym.sym === e &&
-      e.org === null && e.dst() === null &&
-      e.lFace === null && e.rFace() === null);
-};
+define(["require", "exports", "../libtess", "./GluFace", "./GluHalfEdge", "./GluVertex"], function (require, exports, libtess_1, GluFace_1, GluHalfEdge_1, GluVertex_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.GluMesh = void 0;
+    /**
+     * Creates a new mesh with no edges, no vertices,
+     * and no loops (what we usually call a "face").
+     *
+     * @constructor
+     * @struct
+     */
+    class GluMesh {
+        constructor() {
+            /**
+             * dummy header for vertex list
+             */
+            this.vHead = new GluVertex_1.GluVertex();
+            /**
+             * dummy header for face list
+             */
+            this.fHead = new GluFace_1.GluFace();
+            this.eHead = new GluHalfEdge_1.GluHalfEdge();
+            this.eHeadSym = new GluHalfEdge_1.GluHalfEdge();
+            // TODO(bckenny): better way to pair these?
+            this.eHead.sym = this.eHeadSym;
+            this.eHeadSym.sym = this.eHead;
+        }
+        // TODO(bckenny): #ifndef NDEBUG
+        /**
+         * Checks mesh for self-consistency.
+         */
+        checkMesh() {
+            if (!libtess_1.DEBUG) {
+                return;
+            }
+            var fHead = this.fHead;
+            var vHead = this.vHead;
+            var eHead = this.eHead;
+            var e;
+            // faces
+            var f;
+            var fPrev = fHead;
+            for (fPrev = fHead; (f = fPrev.next) !== fHead; fPrev = f) {
+                libtess_1.assert(f.prev === fPrev);
+                e = f.anEdge;
+                do {
+                    libtess_1.assert(e.sym !== e);
+                    libtess_1.assert(e.sym.sym === e);
+                    libtess_1.assert(e.lNext.oNext.sym === e);
+                    libtess_1.assert(e.oNext.sym.lNext === e);
+                    libtess_1.assert(e.lFace === f);
+                    e = e.lNext;
+                } while (e !== f.anEdge);
+            }
+            libtess_1.assert(f.prev === fPrev && f.anEdge === null);
+            // vertices
+            var v;
+            var vPrev = vHead;
+            for (vPrev = vHead; (v = vPrev.next) !== vHead; vPrev = v) {
+                libtess_1.assert(v.prev === vPrev);
+                e = v.anEdge;
+                do {
+                    libtess_1.assert(e.sym !== e);
+                    libtess_1.assert(e.sym.sym === e);
+                    libtess_1.assert(e.lNext.oNext.sym === e);
+                    libtess_1.assert(e.oNext.sym.lNext === e);
+                    libtess_1.assert(e.org === v);
+                    e = e.oNext;
+                } while (e !== v.anEdge);
+            }
+            libtess_1.assert(v.prev === vPrev && v.anEdge === null && v.data === null);
+            // edges
+            var ePrev = eHead;
+            for (ePrev = eHead; (e = ePrev.next) !== eHead; ePrev = e) {
+                libtess_1.assert(e.sym.next === ePrev.sym);
+                libtess_1.assert(e.sym !== e);
+                libtess_1.assert(e.sym.sym === e);
+                libtess_1.assert(e.org !== null);
+                libtess_1.assert(e.dst() !== null);
+                libtess_1.assert(e.lNext.oNext.sym === e);
+                libtess_1.assert(e.oNext.sym.lNext === e);
+            }
+            libtess_1.assert(e.sym.next === ePrev.sym &&
+                e.sym === this.eHeadSym &&
+                e.sym.sym === e &&
+                e.org === null && e.dst() === null &&
+                e.lFace === null && e.rFace() === null);
+        }
+        ;
+    }
+    exports.GluMesh = GluMesh;
+});

@@ -26,131 +26,107 @@
  * Copyright in any portions created by third parties is as indicated
  * elsewhere herein. All Rights Reserved.
  */
-/* global libtess */
-
-/**
- * A list of edges crossing the sweep line, sorted from top to bottom.
- * Implementation is a doubly-linked list, sorted by the injected edgeLeq
- * comparator function. Here it is a simple ordering, but see libtess.sweep for
- * the list of invariants on the edge dictionary this ordering creates.
- * @constructor
- * @struct
- * @param {!libtess.GluTesselator} frame
- * @param {function(!libtess.GluTesselator, !libtess.ActiveRegion, !libtess.ActiveRegion): boolean} leq
- */
-libtess.Dict = function(frame, leq) {
-
-  /**
-   * The head of the doubly-linked DictNode list. At creation time, links back
-   * and forward only to itself.
-   * @private {!libtess.DictNode}
-   */
-  this.head_ = new libtess.DictNode();
-
-  /**
-   * The GluTesselator used as the frame for edge/event comparisons.
-   * @private {!libtess.GluTesselator}
-   */
-  this.frame_ = frame;
-
-  /**
-   * Comparison function to maintain the invariants of the Dict. See
-   * libtess.sweep.edgeLeq_ for source.
-   * @private
-   * @type {function(!libtess.GluTesselator, !libtess.ActiveRegion, !libtess.ActiveRegion): boolean}
-   */
-  this.leq_ = leq;
-};
-
-/* istanbul ignore next */
-/**
- * Formerly used to delete the dict.
- * NOTE(bckenny): No longer called but left for memFree documentation. Nulled at
- * former callsite instead (sweep.doneEdgeDict_)
- * @private
- */
-libtess.Dict.prototype.deleteDict_ = function() {
-  // for (var node = this.head_.next; node !== this.head_; node = node.next) {
-  //   memFree(node);
-  // }
-  // memFree(dict);
-};
-
-/**
- * Insert the supplied key into the edge list and return its new node.
- * @param {libtess.DictNode} node
- * @param {!libtess.ActiveRegion} key
- * @return {!libtess.DictNode}
- */
-libtess.Dict.prototype.insertBefore = function(node, key) {
-  do {
-    node = node.prev;
-  } while (node.key !== null && !this.leq_(this.frame_, node.key, key));
-
-  // insert the new node and update the surrounding nodes to point to it
-  var newNode = new libtess.DictNode(key, node.next, node);
-  node.next.prev = newNode;
-  node.next = newNode;
-
-  return newNode;
-};
-
-/**
- * Insert key into the dict and return the new node that contains it.
- * @param {!libtess.ActiveRegion} key
- * @return {!libtess.DictNode}
- */
-libtess.Dict.prototype.insert = function(key) {
-  // NOTE(bckenny): from a macro in dict.h/dict-list.h
-  return this.insertBefore(this.head_, key);
-};
-
-/**
- * Remove node from the list.
- * @param {libtess.DictNode} node
- */
-libtess.Dict.prototype.deleteNode = function(node) {
-  node.next.prev = node.prev;
-  node.prev.next = node.next;
-
-  // NOTE(bckenny): nulled at callsite (sweep.deleteRegion_)
-  // memFree( node );
-};
-
-/**
- * Search returns the node with the smallest key greater than or equal
- * to the given key. If there is no such key, returns a node whose
- * key is null. Similarly, max(d).getSuccessor() has a null key, etc.
- * @param {!libtess.ActiveRegion} key
- * @return {!libtess.DictNode}
- */
-libtess.Dict.prototype.search = function(key) {
-  var node = this.head_;
-
-  do {
-    node = node.next;
-  } while (node.key !== null && !this.leq_(this.frame_, key, node.key));
-
-  return node;
-};
-
-/**
- * Return the node with the smallest key.
- * @return {!libtess.DictNode}
- */
-libtess.Dict.prototype.getMin = function() {
-  // NOTE(bckenny): from a macro in dict.h/dict-list.h
-  return this.head_.next;
-};
-
-// NOTE(bckenny): libtess.Dict.getMax isn't called within libtess and isn't part
-// of the public API. For now, leaving in but ignoring for coverage.
-/* istanbul ignore next */
-/**
- * Returns the node with the greatest key.
- * @return {!libtess.DictNode}
- */
-libtess.Dict.prototype.getMax = function() {
-  // NOTE(bckenny): from a macro in dict.h/dict-list.h
-  return this.head_.prev;
-};
+define(["require", "exports", "./DictNode"], function (require, exports, DictNode_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.Dict = void 0;
+    /**
+     * A list of edges crossing the sweep line, sorted from top to bottom.
+     * Implementation is a doubly-linked list, sorted by the injected edgeLeq
+     * comparator function. Here it is a simple ordering, but see sweep for
+     * the list of invariants on the edge dictionary this ordering creates.
+     * @constructor
+     * @struct
+     * @param {!GluTesselator} frame
+     * @param {function(!GluTesselator, !ActiveRegion, !ActiveRegion): boolean} leq
+     */
+    class Dict {
+        constructor(frame, leq) {
+            /**
+             * The head of the doubly-linked DictNode list. At creation time, links back
+             * and forward only to itself.
+             */
+            this.head_ = new DictNode_1.DictNode();
+            this.frame_ = frame;
+            this.leq_ = leq;
+        }
+        /**
+         * Formerly used to delete the dict.
+         * NOTE(bckenny): No longer called but left for memFree documentation. Nulled at
+         * former callsite instead (sweep.doneEdgeDict_)
+         * @private
+         */
+        deleteDict_() {
+            // for (var node = this.head_.next; node !== this.head_; node = node.next) {
+            //   memFree(node);
+            // }
+            // memFree(dict);
+        }
+        ;
+        /**
+         * Insert the supplied key into the edge list and return its new node.
+         */
+        insertBefore(node, key) {
+            do {
+                node = node.prev;
+            } while (node.key !== null && !this.leq_(this.frame_, node.key, key));
+            // insert the new node and update the surrounding nodes to point to it
+            var newNode = new DictNode_1.DictNode(key, node.next, node);
+            node.next.prev = newNode;
+            node.next = newNode;
+            return newNode;
+        }
+        ;
+        /**
+         * Insert key into the dict and return the new node that contains it.
+         */
+        insert(key) {
+            // NOTE(bckenny): from a macro in dict.h/dict-list.h
+            return this.insertBefore(this.head_, key);
+        }
+        ;
+        /**
+         * Remove node from the list.
+         */
+        deleteNode(node) {
+            node.next.prev = node.prev;
+            node.prev.next = node.next;
+            // NOTE(bckenny): nulled at callsite (sweep.deleteRegion_)
+            // memFree( node );
+        }
+        ;
+        /**
+         * Search returns the node with the smallest key greater than or equal
+         * to the given key. If there is no such key, returns a node whose
+         * key is null. Similarly, max(d).getSuccessor() has a null key, etc.
+         */
+        search(key) {
+            var node = this.head_;
+            do {
+                node = node.next;
+            } while (node.key !== null && !this.leq_(this.frame_, key, node.key));
+            return node;
+        }
+        ;
+        /**
+         * Return the node with the smallest key.
+         */
+        getMin() {
+            // NOTE(bckenny): from a macro in dict.h/dict-list.h
+            return this.head_.next;
+        }
+        ;
+        // NOTE(bckenny): Dict.getMax isn't called within libtess and isn't part
+        // of the public API. For now, leaving in but ignoring for coverage.
+        /**
+         * Returns the node with the greatest key.
+         */
+        getMax() {
+            // NOTE(bckenny): from a macro in dict.h/dict-list.h
+            return this.head_.prev;
+        }
+        ;
+    }
+    exports.Dict = Dict;
+    ;
+});

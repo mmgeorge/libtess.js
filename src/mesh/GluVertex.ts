@@ -1,6 +1,6 @@
 /**
  * Copyright 2000, Silicon Graphics, Inc. All Rights Reserved.
- * Copyright 2014, Google Inc. All Rights Reserved.
+ * Copyright 2015, Google Inc. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,29 +26,63 @@
  * Copyright in any portions created by third parties is as indicated
  * elsewhere herein. All Rights Reserved.
  */
-define(["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.GluFace = void 0;
-    /**
-     * Each face has a pointer to the next and previous faces in the
-     * circular list, and a pointer to a half-edge with this face as
-     * the left face (null if this is the dummy header). There is also
-     * a field "data" for client data.
-     */
-    class GluFace {
-        constructor(opt_nextFace, opt_prevFace) {
-            /**
-             * A half edge with this left face.
-             */
-            this.anEdge = null;
-            /**
-             * This face is in the polygon interior.
-             */
-            this.inside = false;
-            this.next = opt_nextFace || this;
-            this.prev = opt_prevFace || this;
-        }
-    }
-    exports.GluFace = GluFace;
-});
+
+import { PQHandle } from "../libtess";
+import { GluHalfEdge } from "./GluHalfEdge";
+
+/**
+ * Each vertex has a pointer to next and previous vertices in the
+ * circular list, and a pointer to a half-edge with this vertex as
+ * the origin (null if this is the dummy header). There is also a
+ * field "data" for client data.
+ */
+export class GluVertex {
+
+  constructor(opt_nextVertex?: GluVertex, opt_prevVertex?: GluVertex) {
+    this.next = opt_nextVertex || this;
+    this.prev = opt_prevVertex || this;
+  }
+  
+  /**
+   * Next vertex (never null).
+   */
+  next: GluVertex; 
+
+  /**
+   * Previous vertex (never null).
+   */
+  prev: GluVertex;
+
+  /**
+   * A half-edge with this origin.
+   */
+  anEdge: GluHalfEdge = null;
+
+  /**
+   * The client's data.
+   */
+  data: Object = null;
+
+  /**
+   * The vertex location in 3D.
+   */
+  coords: number[] = [0, 0, 0];
+  // TODO(bckenny): we may want to rethink coords, either eliminate (using s
+  // and t and user data) or index into contiguous storage?
+
+  /**
+   * Component of projection onto the sweep plane.
+   */
+  s = 0;
+
+  /**
+   * Component of projection onto the sweep plane.
+   */
+  t = 0;
+
+  /**
+   * Handle to allow deletion from priority queue, or 0 if not yet inserted into
+   * queue.
+   */
+  pqHandle: PQHandle = 0;
+}

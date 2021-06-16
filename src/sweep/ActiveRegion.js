@@ -26,79 +26,68 @@
  * Copyright in any portions created by third parties is as indicated
  * elsewhere herein. All Rights Reserved.
  */
-/* global libtess */
-
-// TODO(bckenny): apparently only visible outside of sweep for debugging routines.
-// find out if we can hide
-
-/**
- * For each pair of adjacent edges crossing the sweep line, there is
- * an ActiveRegion to represent the region between them. The active
- * regions are kept in sorted order in a dynamic dictionary. As the
- * sweep line crosses each vertex, we update the affected regions.
- * @constructor
- * @struct
- */
-libtess.ActiveRegion = function() {
-  // TODO(bckenny): I *think* eUp and nodeUp could be passed in as constructor params
-
-  /**
-   * The upper edge of the region, directed right to left
-   * @type {libtess.GluHalfEdge}
-   */
-  this.eUp = null;
-
-  /**
-   * Dictionary node corresponding to eUp edge.
-   * @type {libtess.DictNode}
-   */
-  this.nodeUp = null;
-
-  /**
-   * Used to determine which regions are inside the polygon.
-   * @type {number}
-   */
-  this.windingNumber = 0;
-
-  /**
-   * Whether this region is inside the polygon.
-   * @type {boolean}
-   */
-  this.inside = false;
-
-  /**
-   * Marks fake edges at t = +/-infinity.
-   * @type {boolean}
-   */
-  this.sentinel = false;
-
-  /**
-   * Marks regions where the upper or lower edge has changed, but we haven't
-   * checked whether they intersect yet.
-   * @type {boolean}
-   */
-  this.dirty = false;
-
-  /**
-   * marks temporary edges introduced when we process a "right vertex" (one
-   * without any edges leaving to the right)
-   * @type {boolean}
-   */
-  this.fixUpperEdge = false;
-};
-
-/**
- * Returns the ActiveRegion below this one.
- * @return {libtess.ActiveRegion}
- */
-libtess.ActiveRegion.prototype.regionBelow = function() {
-  return this.nodeUp.getPredecessor().getKey();
-};
-
-/**
- * Returns the ActiveRegion above this one.
- * @return {libtess.ActiveRegion}
- */
-libtess.ActiveRegion.prototype.regionAbove = function() {
-  return this.nodeUp.getSuccessor().getKey();
-};
+define(["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.ActiveRegion = void 0;
+    // TODO(bckenny): apparently only visible outside of sweep for debugging routines.
+    // find out if we can hide
+    /**
+     * For each pair of adjacent edges crossing the sweep line, there is
+     * an ActiveRegion to represent the region between them. The active
+     * regions are kept in sorted order in a dynamic dictionary. As the
+     * sweep line crosses each vertex, we update the affected regions.
+     * @constructor
+     * @struct
+     */
+    class ActiveRegion {
+        constructor() {
+            // TODO(bckenny): I *think* eUp and nodeUp could be passed in as constructor params
+            /**
+             * The upper edge of the region, directed right to left
+             */
+            this.eUp = null;
+            /**
+             * Dictionary node corresponding to eUp edge.
+             */
+            this.nodeUp = null;
+            /**
+             * Used to determine which regions are inside the polygon.
+             */
+            this.windingNumber = 0;
+            /**
+             * Whether this region is inside the polygon.
+             */
+            this.inside = false;
+            /**
+             * Marks fake edges at t = +/-infinity.
+             */
+            this.sentinel = false;
+            /**
+             * Marks regions where the upper or lower edge has changed, but we haven't
+             * checked whether they intersect yet.
+             */
+            this.dirty = false;
+            /**
+             * marks temporary edges introduced when we process a "right vertex" (one
+             * without any edges leaving to the right)
+             */
+            this.fixUpperEdge = false;
+        }
+        /**
+         * Returns the ActiveRegion below this one.
+         */
+        regionBelow() {
+            return this.nodeUp.getPredecessor().getKey();
+        }
+        ;
+        /**
+         * Returns the ActiveRegion above this one.
+         */
+        regionAbove() {
+            return this.nodeUp.getSuccessor().getKey();
+        }
+        ;
+    }
+    exports.ActiveRegion = ActiveRegion;
+});

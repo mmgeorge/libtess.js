@@ -26,60 +26,44 @@
  * Copyright in any portions created by third parties is as indicated
  * elsewhere herein. All Rights Reserved.
  */
-/* global libtess */
-
-/**
- * A doubly-linked-list node with a libtess.ActiveRegion payload.
- * The key for this node and the next and previous nodes in the parent Dict list
- * can be provided to insert it into an existing list (or all can be omitted if
- * this is to be the founding node of the list).
- * @param {!libtess.ActiveRegion=} opt_key
- * @param {!libtess.DictNode=} opt_nextNode
- * @param {!libtess.DictNode=} opt_prevNode
- * @constructor
- * @struct
- */
-libtess.DictNode = function(opt_key, opt_nextNode, opt_prevNode) {
-  /**
-   * The ActiveRegion key for this node, or null if the head of the list.
-   * @type {libtess.ActiveRegion}
-   */
-  this.key = opt_key || null;
-
-  /**
-   * Link to next DictNode in parent list or to self if this is the first node.
-   * @type {!libtess.DictNode}
-   */
-  this.next = opt_nextNode || this;
-
-  /**
-   * Link to previous DictNode in parent list or to self if this is the first
-   * node.
-   * @type {!libtess.DictNode}
-   */
-  this.prev = opt_prevNode || this;
-};
-
-/**
- * Get the key from this node.
- * @return {libtess.ActiveRegion}
- */
-libtess.DictNode.prototype.getKey = function() {
-  return this.key;
-};
-
-/**
- * Get the successor node to this one.
- * @return {!libtess.DictNode}
- */
-libtess.DictNode.prototype.getSuccessor = function() {
-  return this.next;
-};
-
-/**
- * Get the predecessor node to this one.
- * @return {!libtess.DictNode}
- */
-libtess.DictNode.prototype.getPredecessor = function() {
-  return this.prev;
-};
+define(["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.DictNode = void 0;
+    /**
+     * A doubly-linked-list node with a libtess.ActiveRegion payload.
+     * The key for this node and the next and previous nodes in the parent Dict list
+     * can be provided to insert it into an existing list (or all can be omitted if
+     * this is to be the founding node of the list).
+     */
+    class DictNode {
+        constructor(opt_key, opt_nextNode, opt_prevNode) {
+            this.key = opt_key || null;
+            this.next = opt_nextNode || this;
+            this.prev = opt_prevNode || this;
+        }
+        /**
+         * Get the key from this node.
+         */
+        getKey() {
+            return this.key;
+        }
+        ;
+        /**
+         * Get the successor node to this one.
+         */
+        getSuccessor() {
+            return this.next;
+        }
+        ;
+        /**
+         * Get the predecessor node to this one.
+         */
+        getPredecessor() {
+            return this.prev;
+        }
+        ;
+    }
+    exports.DictNode = DictNode;
+    ;
+});
