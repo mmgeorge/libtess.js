@@ -27,6 +27,7 @@
  * elsewhere herein. All Rights Reserved.
  */
 
+import { Pool } from "../Pool";
 import { GluHalfEdge } from "./GluHalfEdge";
 
 /**
@@ -36,9 +37,13 @@ import { GluHalfEdge } from "./GluHalfEdge";
  * a field "data" for client data.
  */
 export class GluFace {
-  constructor(opt_nextFace?: GluFace, opt_prevFace?: GluFace) {
+  static pool = new Pool<typeof GluFace, GluFace>(GluFace, 8096)
+
+  initialize(opt_nextFace?: GluFace, opt_prevFace?: GluFace): void {
     this.next = opt_nextFace || this;
     this.prev = opt_prevFace || this;
+    this.anEdge = null; 
+    this.inside = false;
   }
 
   // TODO(bckenny): reverse order of params?

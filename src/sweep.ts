@@ -226,8 +226,7 @@ function deleteRegion_(tess: GluTesselator, reg: ActiveRegion): void {
   tess.dict.deleteNode(reg.nodeUp);
   reg.nodeUp = null;
 
-  // memFree( reg ); TODO(bckenny)
-  // TODO(bckenny): may need to null at callsite
+  ActiveRegion.pool.release(reg)
 };
 
 
@@ -292,7 +291,7 @@ function topRightRegion_(reg: ActiveRegion): ActiveRegion {
  * Winding number and "inside" flag are not updated.
  */
 function addRegionBelow_(tess: GluTesselator, regAbove: ActiveRegion, eNewUp: GluHalfEdge): ActiveRegion {
-  var regNew = new ActiveRegion();
+  const regNew = ActiveRegion.pool.acquire();
 
   regNew.eUp = eNewUp;
   regNew.nodeUp = tess.dict.insertBefore(regAbove.nodeUp, regNew);
@@ -737,7 +736,7 @@ function checkForIntersect_(tess: GluTesselator, regUp: ActiveRegion): boolean {
   var dstUp = eUp.dst();
   var dstLo = eLo.dst();
 
-  var isect = new GluVertex();
+  var isect = GluVertex.pool.acquire();
 
   assert(!geom.vertEq(dstLo, dstUp));
   assert(geom.edgeSign(dstUp, tess.event, orgUp) <= 0);
@@ -1162,15 +1161,22 @@ function connectLeftDegenerate_(tess: GluTesselator, regUp: ActiveRegion , vEven
  * @param {GluVertex} vEvent [description].
  */
 function connectLeftVertex_(tess: GluTesselator, vEvent: GluVertex) {
+  let regUp: ActiveRegion;
+  
   // TODO(bckenny): tmp only used for sweep. better to keep tmp across calls?
-  var tmp = new ActiveRegion();
+  {
+    let temp = ActiveRegion.pool.acquire();
 
-  // NOTE(bckenny): this was commented out in the original
-  // assert(vEvent.anEdge.oNext.oNext === vEvent.anEdge);
+    // NOTE(bckenny): this was commented out in the original
+    // assert(vEvent.anEdge.oNext.oNext === vEvent.anEdge);
 
-  // Get a pointer to the active region containing vEvent
-  tmp.eUp = vEvent.anEdge.sym;
-  var regUp = tess.dict.search(tmp).getKey();
+    // Get a pointer to the active region containing vEvent
+    temp.eUp = vEvent.anEdge.sym;
+    regUp = tess.dict.search(temp).getKey();
+
+    ActiveRegion.pool.release(temp)
+  }
+  
   var regLo = regUp.regionBelow();
   var eUp = regUp.eUp;
   var eLo = regLo.eUp;
@@ -1272,7 +1278,7 @@ function sweepEvent_(tess: GluTesselator, vEvent: GluVertex) {
  * @param {number} t [description].
  */
 function addSentinel_(tess: GluTesselator, t: number): void {
-  var reg = new ActiveRegion();
+  var reg = ActiveRegion.pool.acquire();
 
   var e = mesh.makeEdge(tess.mesh);
 

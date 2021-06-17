@@ -26,7 +26,6 @@
  * Copyright in any portions created by third parties is as indicated
  * elsewhere herein. All Rights Reserved.
  */
-/* global libtess */
 
 import { GluFace } from "./mesh/GluFace";
 import { GluHalfEdge } from "./mesh/GluHalfEdge";
@@ -328,8 +327,7 @@ export function zapFace(fZap: GluFace): void {
   fNext.prev = fPrev;
   fPrev.next = fNext;
 
-  // TODO(bckenny): memFree( fZap );
-  // TODO(bckenny): probably null at callsite
+  GluFace.pool.release(fZap); 
 };
 
 // TODO(bckenny): meshUnion isn't called within libtess and isn't part of the
@@ -371,19 +369,56 @@ export function meshUnion(mesh1: GluMesh, mesh2: GluMesh): GluMesh {
     e1.sym.next = e2.sym.next;
   }
 
-  // TODO(bckenny): memFree(mesh2);
-  // TODO(bckenny): If function is kept, remove mesh2's data to enforce.
+  //memFree GlueMesh
+  
+  //GluMesh.pool.release(mesh2);
+
   return mesh1;
 };
 
 
-/**
- * deleteMesh(mesh) will free all storage for any valid mesh.
+
+/* __gl_meshDelete( eDel ) removes the edge eDel.  There are several cases:
+ * if (eDel->Lface != eDel->Rface), we join two loops into one; the loop
+ * eDel->Lface is deleted.  Otherwise, we are splitting one loop into two;
+ * the newly created loop will contain eDel->Dst.  If the deletion of eDel
+ * would create isolated vertices, those are deleted as well.
+ *
+ * This function could be implemented as two calls to __gl_meshSplice
+ * plus a few calls to memFree, but this would allocate and delete
+ * unnecessary vertices and faces.
  */
-export function deleteMesh(_mesh: GluMesh) {
-  // TODO(bckenny): unnecessary, I think.
-  // TODO(bckenny): might want to explicitly null at callsite
-  // lots of memFrees. see also DELETE_BY_ZAPPING
+export function deleteMeshByZapping(mesh: GluMesh) {
+  const head = mesh.fHead;
+
+  while (head.next !== head) {
+    zapFace(head.next); 
+  }
+
+  // memFree mesh
+};
+
+
+export function deleteMesh(mesh: GluMesh) {
+  let f, fNext: GluFace;
+  let v, vNext: GluVertex;
+  let e, eNext: GluHalfEdge; 
+  
+  for (f = mesh.fHead.next; f !== mesh.fHead; f = fNext) {
+    fNext = f.next
+    GluFace.pool.release(f); 
+  }
+
+  for (v = mesh.vHead.next; v !== mesh.vHead; v = vNext) {
+    vNext = v.next;
+    GluVertex.pool.release(v); 
+  }
+
+  for (e = mesh.eHead.next; e !== mesh.eHead; e = eNext) {
+    eNext = e.next;
+    GluHalfEdge.pool.release(e); 
+  }
+  // memFree mesh
 };
 
 /************************ Utility Routines ************************/
@@ -397,8 +432,8 @@ export function deleteMesh(_mesh: GluMesh) {
  * TODO(bckenny): warning about eNext strictly being first of pair? (see code)
  */
 export function makeEdgePair_(eNext: GluHalfEdge): GluHalfEdge {
-  var e = new GluHalfEdge();
-  var eSym = new GluHalfEdge();
+  var e = GluHalfEdge.pool.acquire();
+  var eSym = GluHalfEdge.pool.acquire();
 
   // TODO(bckenny): how do we ensure this? see above comment in jsdoc
   // Make sure eNext points to the first edge of the edge pair
@@ -455,8 +490,8 @@ function splice_(a: GluHalfEdge, b: GluHalfEdge): void {
  */
 function makeVertex_(eOrig: GluHalfEdge, vNext: GluVertex) {
   // insert in circular doubly-linked list before vNext
-  var vPrev = vNext.prev;
-  var vNew = new GluVertex(vNext, vPrev);
+  const vPrev = vNext.prev;
+  const vNew = GluVertex.pool.acquire(vNext, vPrev);
   vPrev.next = vNew;
   vNext.prev = vNew;
 
@@ -465,7 +500,7 @@ function makeVertex_(eOrig: GluHalfEdge, vNext: GluVertex) {
   // TODO(bckenny): does above line mean 0 specifically, or does it matter?
 
   // fix other edges on this vertex loop
-  var e = eOrig;
+  let e = eOrig;
   do {
     e.org = vNew;
     e = e.oNext;
@@ -485,7 +520,7 @@ function makeVertex_(eOrig: GluHalfEdge, vNext: GluVertex) {
 function makeFace_(eOrig: GluHalfEdge, fNext: GluFace) {
   // insert in circular doubly-linked list before fNext
   var fPrev = fNext.prev;
-  var fNew = new GluFace(fNext, fPrev);
+  var fNew = GluFace.pool.acquire(fNext, fPrev);
   fPrev.next = fNew;
   fNext.prev = fNew;
 
@@ -511,7 +546,7 @@ function makeFace_(eOrig: GluHalfEdge, fNext: GluFace) {
 function killEdge_(eDel: GluHalfEdge): void {
   // TODO(bckenny): in this case, no need to worry(?), but check when checking mesh.makeEdgePair_
   // Half-edges are allocated in pairs, see EdgePair above
-  // if (eDel->Sym < eDel ) { eDel = eDel->Sym; }
+  //if (eDel.sym !== eDel ) { eDel = eDel.sym; }
 
   // delete from circular doubly-linked list
   var eNext = eDel.next;
@@ -519,8 +554,7 @@ function killEdge_(eDel: GluHalfEdge): void {
   eNext.sym.next = ePrev;
   ePrev.sym.next = eNext;
 
-  // TODO(bckenny): memFree( eDel ); (which also frees eDel.sym)
-  // TODO(bckenny): need to null at callsites?
+  GluHalfEdge.pool.release(eDel);
 };
 
 
@@ -544,8 +578,7 @@ function killVertex_(vDel: GluVertex, newOrg: GluVertex): void {
   vNext.prev = vPrev;
   vPrev.next = vNext;
 
-  // TODO(bckenny): memFree( vDel );
-  // TODO(bckenny): need to null at callsites?
+  GluVertex.pool.release(vDel); 
 };
 
 
@@ -569,6 +602,5 @@ export function killFace_(fDel: GluFace, newLFace: GluFace): void {
   fNext.prev = fPrev;
   fPrev.next = fNext;
 
-  // TODO(bckenny): memFree( fDel );
-  // TODO(bckenny): need to null at callsites?
+  GluFace.pool.release(fDel); 
 };

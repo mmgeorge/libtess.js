@@ -29,6 +29,7 @@
 
 import { GluHalfEdge } from "../mesh/GluHalfEdge";
 import { DictNode } from "../dict/DictNode"
+import { Pool } from "../Pool";
 
 // TODO(bckenny): apparently only visible outside of sweep for debugging routines.
 // find out if we can hide
@@ -44,6 +45,23 @@ import { DictNode } from "../dict/DictNode"
 export class ActiveRegion {
   // TODO(bckenny): I *think* eUp and nodeUp could be passed in as constructor params
 
+  static readonly pool = new Pool<typeof ActiveRegion, ActiveRegion>(ActiveRegion, 8096)
+
+  initialize(): void {
+    this.eUp = null;
+    this.nodeUp = null;
+    this.windingNumber = 0;
+    this.inside = false;
+    this.sentinel = false;
+    this.dirty = false;
+    this.fixUpperEdge = false;
+  }
+
+  static alloc(): ActiveRegion {
+    return new ActiveRegion()
+  }
+  
+  
   /**
    * The upper edge of the region, directed right to left
    */
@@ -94,5 +112,9 @@ export class ActiveRegion {
   regionAbove(): ActiveRegion {
     return this.nodeUp.getSuccessor().getKey();
   };
+
+  free(): void {
+    
+  }
 
 }

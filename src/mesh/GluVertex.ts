@@ -28,6 +28,7 @@
  */
 
 import { PQHandle } from "../libtess";
+import { Pool } from "../Pool";
 import { GluHalfEdge } from "./GluHalfEdge";
 
 /**
@@ -38,9 +39,17 @@ import { GluHalfEdge } from "./GluHalfEdge";
  */
 export class GluVertex {
 
-  constructor(opt_nextVertex?: GluVertex, opt_prevVertex?: GluVertex) {
+  static pool = new Pool<typeof GluVertex, GluVertex>(GluVertex, 8096);
+
+  initialize(opt_nextVertex?: GluVertex, opt_prevVertex?: GluVertex): void {
     this.next = opt_nextVertex || this;
     this.prev = opt_prevVertex || this;
+    this.anEdge = null;
+    this.data = null;
+    this.coords = [0, 0, 0];
+    this.s = 0;
+    this.t = 0;
+    this.pqHandle = 0; 
   }
   
   /**

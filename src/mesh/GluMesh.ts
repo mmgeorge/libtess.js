@@ -41,9 +41,10 @@ import { GluVertex } from "./GluVertex";
  * @struct
  */
 export class GluMesh {
+
   constructor() {
-    this.eHead = new GluHalfEdge();
-    this.eHeadSym = new GluHalfEdge();
+    this.eHead = GluHalfEdge.pool.acquire();
+    this.eHeadSym = GluHalfEdge.pool.acquire();
 
     // TODO(bckenny): better way to pair these?
     this.eHead.sym = this.eHeadSym;
@@ -53,12 +54,12 @@ export class GluMesh {
   /**
    * dummy header for vertex list
    */
-  vHead = new GluVertex();
+  vHead = GluVertex.pool.acquire();
 
   /**
    * dummy header for face list
    */
-  fHead = new GluFace();
+  fHead = GluFace.pool.acquire();
 
   /**
    * dummy header for edge list

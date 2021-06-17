@@ -27,6 +27,7 @@
  * elsewhere herein. All Rights Reserved.
  */
 
+import { Pool } from "../Pool";
 import { ActiveRegion } from "../sweep/ActiveRegion";
 import { GluFace } from "./GluFace";
 import { GluVertex } from "./GluVertex";
@@ -57,10 +58,20 @@ import { GluVertex } from "./GluVertex";
  * always true that e.sym.next.sym.next === e.
  */
 export class GluHalfEdge {
-  constructor(opt_nextEdge?: GluHalfEdge) {
-    this.next = opt_nextEdge || this;
-  }
+
+  static pool = new Pool<typeof GluHalfEdge, GluHalfEdge>(GluHalfEdge, 8096);
   
+  initialize(opt_nextEdge?: GluHalfEdge): void {
+    this.next = opt_nextEdge || this;
+    this.sym = null;
+    this.oNext = null;
+    this.lNext = null;
+    this.org = null;
+    this.lFace = null;
+    this.activeRegion = null;
+    this.winding = 0;
+  }
+
   // TODO(bckenny): are these the right defaults? (from gl_meshNewMesh requirements)
 
   /**
