@@ -92,7 +92,7 @@ export class PriorityQHeap {
   private initialized_ = false;
 
   // The initial allocated space for the queue.
-  static INIT_SIZE_ = 32;
+  static INIT_SIZE_ = 1024;
 
   
   /**

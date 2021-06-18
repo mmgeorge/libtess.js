@@ -746,6 +746,8 @@ function checkForIntersect_(tess: GluTesselator, regUp: ActiveRegion): boolean {
 
   if (orgUp === orgLo) {
     // right endpoints are the same
+    GluVertex.pool.release(isect);
+    
     return false;
   }
 
@@ -753,15 +755,23 @@ function checkForIntersect_(tess: GluTesselator, regUp: ActiveRegion): boolean {
   var tMaxLo = Math.max(orgLo.t, dstLo.t);
   if (tMinUp > tMaxLo) {
     // t ranges do not overlap
+    GluVertex.pool.release(isect);
+    
     return false;
   }
 
   if (geom.vertLeq(orgUp, orgLo)) {
     if (geom.edgeSign(dstLo, orgUp, orgLo) > 0) {
+
+      GluVertex.pool.release(isect);
+      
       return false;
     }
   } else {
     if (geom.edgeSign(dstUp, orgLo, orgUp) < 0) {
+
+      GluVertex.pool.release(isect);
+      
       return false;
     }
   }
@@ -802,6 +812,9 @@ function checkForIntersect_(tess: GluTesselator, regUp: ActiveRegion): boolean {
   if (geom.vertEq(isect, orgUp) || geom.vertEq(isect, orgLo)) {
     // Easy case -- intersection at one of the right endpoints
     checkForRightSplice_(tess, regUp);
+
+    GluVertex.pool.release(isect); 
+    
     return false;
   }
 
@@ -823,6 +836,9 @@ function checkForIntersect_(tess: GluTesselator, regUp: ActiveRegion): boolean {
       eUp = regUp.regionBelow().eUp;
       finishLeftRegions_(tess, regUp.regionBelow(), regLo);
       addRightEdges_(tess, regUp, eUp.oPrev(), eUp, eUp, true);
+
+      GluVertex.pool.release(isect);
+      
       return true;
     }
 
@@ -836,7 +852,10 @@ function checkForIntersect_(tess: GluTesselator, regUp: ActiveRegion): boolean {
       regLo.eUp = eLo.oPrev();
       eLo = finishLeftRegions_(tess, regLo, null);
       addRightEdges_(tess, regUp, eLo.oNext, eUp.rPrev(), e,
-          true);
+                     true);
+
+      GluVertex.pool.release(isect);
+      
       return true;
     }
 
@@ -859,6 +878,9 @@ function checkForIntersect_(tess: GluTesselator, regUp: ActiveRegion): boolean {
     }
 
     // leave the rest for connectRightVertex
+
+    GluVertex.pool.release(isect);
+    
     return false;
   }
 
@@ -879,6 +901,8 @@ function checkForIntersect_(tess: GluTesselator, regUp: ActiveRegion): boolean {
   getIntersectData_(tess, eUp.org, orgUp, dstUp, orgLo, dstLo);
   regUp.regionAbove().dirty = regUp.dirty = regLo.dirty = true;
 
+  GluVertex.pool.release(isect); 
+  
   return false;
 };
 

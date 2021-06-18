@@ -5,8 +5,12 @@ import { isSome } from "esri/core/maybe";
 
 export class Pool<T extends { new (...args: any[]): W }, W extends { initialize(...args: any[]): void }> {
 
-  constructor(private readonly poolable_: T, size_: number) {
-    this.buffer_ = new CircularArray(size_ * 4); 
+  constructor(private readonly poolable_: T, maxSize_: number) {
+    this.buffer_ = new CircularArray(maxSize_);
+
+    for (let i = 0; i < maxSize_; i++) {
+      this.buffer_.enqueue(new poolable_())
+    }
   }
 
   private buffer_: CircularArray<W>;

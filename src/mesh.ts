@@ -388,12 +388,15 @@ export function meshUnion(mesh1: GluMesh, mesh2: GluMesh): GluMesh {
  * plus a few calls to memFree, but this would allocate and delete
  * unnecessary vertices and faces.
  */
-export function deleteMeshByZapping(mesh: GluMesh) {
+export function deleteMesh2(mesh: GluMesh) {
   const head = mesh.fHead;
 
   while (head.next !== head) {
     zapFace(head.next); 
   }
+
+  GluHalfEdge.pool.release(mesh.eHead);
+  GluHalfEdge.pool.release(mesh.eHeadSym); 
 
   // memFree mesh
 };
@@ -416,9 +419,15 @@ export function deleteMesh(mesh: GluMesh) {
 
   for (e = mesh.eHead.next; e !== mesh.eHead; e = eNext) {
     eNext = e.next;
-    GluHalfEdge.pool.release(e); 
+    GluHalfEdge.pool.release(e);
+    GluHalfEdge.pool.release(e.sym); 
   }
   // memFree mesh
+
+  GluHalfEdge.pool.release(mesh.eHead);
+  GluHalfEdge.pool.release(mesh.eHeadSym); 
+  GluVertex.pool.release(mesh.vHead);
+  GluFace.pool.release(mesh.fHead); 
 };
 
 /************************ Utility Routines ************************/
@@ -546,7 +555,7 @@ function makeFace_(eOrig: GluHalfEdge, fNext: GluFace) {
 function killEdge_(eDel: GluHalfEdge): void {
   // TODO(bckenny): in this case, no need to worry(?), but check when checking mesh.makeEdgePair_
   // Half-edges are allocated in pairs, see EdgePair above
-  //if (eDel.sym !== eDel ) { eDel = eDel.sym; }
+  //if (eDel.sym < eDel ) { eDel = eDel.sym; }
 
   // delete from circular doubly-linked list
   var eNext = eDel.next;
@@ -554,6 +563,7 @@ function killEdge_(eDel: GluHalfEdge): void {
   eNext.sym.next = ePrev;
   ePrev.sym.next = eNext;
 
+  GluHalfEdge.pool.release(eDel.sym);
   GluHalfEdge.pool.release(eDel);
 };
 

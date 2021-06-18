@@ -48,30 +48,31 @@ export class GluMesh {
 
     // TODO(bckenny): better way to pair these?
     this.eHead.sym = this.eHeadSym;
-    this.eHeadSym.sym = this.eHead;    
+    this.eHeadSym.sym = this.eHead;
+
+    this.vHead = GluVertex.pool.acquire();
+    this.fHead = GluFace.pool.acquire();
   }
 
   /**
    * dummy header for vertex list
    */
-  vHead = GluVertex.pool.acquire();
+  vHead: GluVertex;
 
   /**
    * dummy header for face list
    */
-  fHead = GluFace.pool.acquire();
+  fHead: GluFace;
 
   /**
    * dummy header for edge list
    */
-  eHead: GluHalfEdge; 
+  eHead: GluHalfEdge;
 
   /**
    * and its symmetric counterpart
    */
   eHeadSym: GluHalfEdge;
-
-  
 
   // TODO(bckenny): #ifndef NDEBUG
   /**
